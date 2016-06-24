@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, timedelta
 
 def getData(filepath):
 	file = open(filepath, "r")
@@ -27,6 +27,30 @@ def getData(filepath):
 	file.close()
 	return count, session
 
+def getDateRange(data):
+	for i in range(len(data)):
+		try:
+			date = data[i][0][4]
+		except IndexError:
+			date = None
+
+		if date is not None:
+			start = date.date()
+			break
+
+	for i in range(len(data)):
+		i += 1
+
+		try:
+			date = data[len(data) - i][len(data[len(data) - 1]) - 1][4]
+		except IndexError:
+			date = None
+
+		if date is not None:
+			end = date.date()
+			break
+	return str(start), str(end)
+
 # for debugging
 def printer(f, *x):
 	data = f(*x)
@@ -39,7 +63,10 @@ def sumSessions(data):
 	ret = [0] * length
 	for session in data:
 		for i in range(length):
-			ret[i] += session[i]
+			try:
+				ret[i] += session[i]
+			except:
+				ret[i]
 	return ret
 
 def clickTypePerSession(data):
@@ -86,19 +113,31 @@ def clicksPerSession(data):
 def timePerSession(data):
 	ret = []
 	for session in data:
-		ret.append(session[len(session) - 1][4] - session[0][4])
+		try:
+			date = session[len(session) - 1][4] - session[0][4]
+		except IndexError:
+			date = timedelta(0, 0)
+		ret.append(date)
 	return ret
 
 def turnOnTimePerSession(data):
 	ret = []
 	for session in data:
-		ret.append(session[0][4])
+		try:
+			date = session[0][4]
+		except IndexError:
+			date = None
+		ret.append(date)
 	return ret
 
 def turnOffTimePerSession(data):
 	ret = []
 	for session in data:
-		ret.append(session[len(session) - 1][4])
+		try:
+			date = session[len(session) - 1][4]
+		except IndexError:
+			date = None
+		ret.append(date)
 	return ret
 
 def coordinatesPerSession(data):
@@ -131,4 +170,14 @@ def clicksPerHourPerSession(data):
 		for action in session:
 			hours[action[4].hour] += 1
 		ret.append(hours)
+	return ret
+
+def clicksPerDayPerSession(data):
+	ret = []
+	for session in data:
+		days = [0] * 7
+		for action in session:
+			# mon : 0, sun: 6
+			days[action[4].weekday()] += 1
+		ret.append(days)
 	return ret
