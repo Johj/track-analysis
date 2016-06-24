@@ -11,22 +11,18 @@ count, data = f.getData(filepath)
 start, end = f.getDateRange(data)
 
 '''
-0. clickTypePerSession (stacked bar, pie)
-1. monitorUsedPerSession (stacked bar, pie)
-2. clicksPerSession (line (session, clicks), histogram, box)
-3. timePerSession (line (session, time), histogram, box)
-4. turnOnTimePerSession (line (session, time), histogram, box)
-5. turnOffTimePerSession (line (session, time), histogram, box)
-6. coordinatesPerSession (2d, 3d scatter, heat)
-7. timeBetweenClicksPerSession (histogram, box)
-8. clicksPerHourPerSession (bar)
-9. clicksPerDayPerSession (bar)
-'''
-
-'''
-# TODO
-data4 = f.printer(f.turnOnTimePerSession, data)
-data5 = f.printer(f.turnOffTimePerSession, data)
+0. Click Type (pie)
+1. Monitor Use (pie)
+2. Clicks Per Date (line)
+3. Hours Per Session (line)
+4. Frequency Of Turn On Times (histogram)
+5. Frequency Of Shutdown Times (histogram)
+6. Click Mapping (scatter)
+7. Frequency Of Seconds Between Clicks (histogram)
+8. Clicks By The Hour (bar)
+9. Clicks By The Day (bar)
+10. Frequency Of Clicks Per Session (histogram)
+11. Frequency Of Hours Per Session (histogram)
 '''
 
 '''
@@ -96,11 +92,83 @@ fig3 = dict(
 )
 py.image.save_as(fig3, name + "/fig3.png")
 
+data4Temp = []
+for x in f.turnOnTimePerSession(data):
+	if x is None:
+		continue
+	elif x.time().minute >= 30:
+		data4Temp.append((x.time().hour + 1) % 24)
+	else:
+		data4Temp.append((x.time().hour) % 24)
+data4 = [0] * 24
+for x in data4Temp:
+	data4[x] += 1
+
+fig4 = go.Figure(
+	data = [go.Bar(
+        x = [
+			'0:00', '1:00', '2:00', '3:00', '4:00', '5:00',
+			'6:00', '7:00', '8:00', '9:00', '10:00', '11:00',
+			'12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+			'18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
+		],
+        y = data4
+	)],
+	layout = go.Layout(
+		title = "Frequency Of Turn On Times (" + name + ")<br>" + start + " - " + end,
+		xaxis = dict(
+			title = "Turn On Times",
+			tickangle = -45,
+		),
+		yaxis = dict(
+			title = "Frequency"
+		),
+		bargap = 0
+	)
+)
+py.image.save_as(fig4, name + "/fig4.png")
+
+data5Temp = []
+for x in f.turnOffTimePerSession(data):
+	if x is None:
+		continue
+	elif x.time().minute >= 30:
+		data5Temp.append((x.time().hour + 1) % 24)
+	else:
+		data5Temp.append((x.time().hour) % 24)
+data5 = [0] * 24
+for x in data5Temp:
+	data5[x] += 1
+
+fig5 = go.Figure(
+	data = [go.Bar(
+        x = [
+			'0:00', '1:00', '2:00', '3:00', '4:00', '5:00',
+			'6:00', '7:00', '8:00', '9:00', '10:00', '11:00',
+			'12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+			'18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
+		],
+        y = data5
+	)],
+	layout = go.Layout(
+		title = "Frequency Of Shutdown Times (" + name + ")<br>" + start + " - " + end,
+		xaxis = dict(
+			title = "Shutdown Times",
+			tickangle = -45,
+		),
+		yaxis = dict(
+			title = "Frequency"
+		),
+		bargap = 0
+	)
+)
+py.image.save_as(fig5, name + "/fig5.png")
+
 data6XTemp, data6YTemp = f.coordinatesPerSession(data)
 # flatten
 data6XTemp = list(itertools.chain(*data6XTemp))
 data6YTemp = list(itertools.chain(*data6YTemp))
-k = 0.10
+k = 0.80
 random.seed(0)
 indicies = random.sample(range(len(data6XTemp)), round(len(data6XTemp) * k))
 data6X = [data6XTemp[i] for i in indicies]
@@ -115,16 +183,15 @@ fig6 = dict(
 		)
 	)],
 	layout = go.Layout(
-		title = "Click Mapping, Random Sampling = " + str(k) + " out of " + str(count) + " (" + name + ")<br>" + start + " - " + end,
+		title = "Click Mapping (Primary), Sampling " + str(k * 100) + "% out of " + str(count) + " (" + name + ")<br>" + start + " - " + end,
 		xaxis = dict(
 			title = "x",
-			range = [min(data6X), max(data6X)]
+			range = [0, 1920]
 		),
 		yaxis = dict(
 			title = "y",
-			range = [min(data6Y), max(data6Y)],
-			zeroline = False,
-			autorange = "reversed"
+			range = [1080, 0],
+			zeroline = False
 		)
 	)
 )
@@ -143,12 +210,12 @@ fig7 = go.Figure(
 		x = data7
 	)],
 	layout = go.Layout(
-		title = "Seconds Between Clicks (" + name + ")<br>" + start + " - " + end,
+		title = "Frequency Of Seconds Between Clicks (" + name + ")<br>" + start + " - " + end,
 		xaxis = dict(
-			title = "Seconds"
+			title = "Seconds Between Clicks"
 		),
 		yaxis = dict(
-			title = "Count"
+			title = "Frequency"
 		)
 	)
 )
@@ -165,7 +232,7 @@ fig8 = go.Figure(
         y = f.sumSessions(f.clicksPerHourPerSession(data))
 	)],
 	layout = go.Layout(
-		title = "Clicks Per Hour (" + name + ")<br>" + start + " - " + end,
+		title = "Clicks By The Hour (" + name + ")<br>" + start + " - " + end,
 		xaxis = dict(
 			title = "Hour",
 			tickangle = -45,
@@ -186,7 +253,7 @@ fig9 = go.Figure(
         y = f.sumSessions(f.clicksPerDayPerSession(data))
 	)],
 	layout = go.Layout(
-		title = "Clicks Per Day (" + name + ")<br>" + start + " - " + end,
+		title = "Clicks By The Day (" + name + ")<br>" + start + " - " + end,
 		xaxis = dict(
 			title = "Day"
 		),
@@ -196,4 +263,49 @@ fig9 = go.Figure(
 	)
 )
 py.image.save_as(fig9, name + "/fig9.png")
+
+data10 = [round(x, -2) for x in f.clicksPerSession(data)]
+fig10 = go.Figure(
+	data = [go.Histogram(
+		x = data10,
+		autobinx = False,
+		xbins = dict(
+			start = 0,
+			end = max(data10),
+			size = 500
+		)
+	)],
+	layout = go.Layout(
+		title = "Frequency Of Clicks Per Session (" + name + ")<br>" + start + " - " + end,
+		xaxis = dict(
+			title = "Clicks Per Session"
+		),
+		yaxis = dict(
+			title = "Frequency"
+		)
+	)
+)
+py.image.save_as(fig10, name + "/fig10.png")
+
+fig11 = go.Figure(
+	data = [go.Histogram(
+		x = [round(x.total_seconds() / 3600, 0) for x in f.timePerSession(data)],
+		autobinx = False,
+		xbins = dict(
+			start = 0,
+			end = 30,
+			size = 1
+		)
+	)],
+	layout = go.Layout(
+		title = "Frequency Of Hours Per Session (" + name + ")<br>" + start + " - " + end,
+		xaxis = dict(
+			title = "Hours Per Session"
+		),
+		yaxis = dict(
+			title = "Frequency"
+		)
+	)
+)
+py.image.save_as(fig11, name + "/fig11.png")
 '''
