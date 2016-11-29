@@ -186,11 +186,11 @@ fig6 = dict(
 		title = "Click Mapping (Primary), Sampling " + str(k * 100) + "% out of " + str(count) + " (" + name + ")<br>" + start + " - " + end,
 		xaxis = dict(
 			title = "x",
-			range = [0, 1920]
+			range = [0, 1920] #[-1920, -400]
 		),
 		yaxis = dict(
 			title = "y",
-			range = [1080, 0],
+			range = [1080, 0], #[864, 0]
 			zeroline = False
 		)
 	)
